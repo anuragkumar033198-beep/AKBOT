@@ -2,424 +2,515 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Video Chat Hacker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal AI Chat</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
+    
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0f0c29;
-            background-image: linear-gradient(315deg, #0f0c29 0%, #302b63 74%, #24243e 100%);
-            color: #ffffff;
-            height: 100vh; /* Mobile viewport fix */
-            overflow: hidden; /* Prevent body scroll, handle inside containers */
-        }
-
-        /* Glassmorphism Utilities */
-        .glass {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .glass-input {
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: white;
-        }
-        .glass-input:focus {
-            outline: none;
-            border-color: #a78bfa;
-            background: rgba(0, 0, 0, 0.5);
-        }
-
-        /* Scrollbar hiding for clean UI */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-
-        /* Markdown Styles within Chat */
-        .prose p { margin-bottom: 0.5em; }
-        .prose ul { list-style-type: disc; padding-left: 1.2em; margin-bottom: 0.5em; }
-        .prose ol { list-style-type: decimal; padding-left: 1.2em; margin-bottom: 0.5em; }
-        .prose code { background: rgba(255,255,255,0.1); padding: 2px 4px; border-radius: 4px; font-size: 0.9em; }
-        .prose pre { background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px; overflow-x: auto; margin-bottom: 0.5em; }
-
-        /* Loader Animation */
-        .loader {
-            border: 3px solid rgba(255,255,255,0.1);
-            border-left-color: #a78bfa;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    </style>
-</head>
-<body class="flex flex-col h-screen relative">
-
-    <header class="glass sticky top-0 z-20 px-4 py-3 flex justify-between items-center shadow-lg">
-        <div class="flex items-center gap-2">
-            <div class="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center font-bold text-sm">VH</div>
-            <h1 class="font-semibold text-lg tracking-wide">Video Hacker</h1>
-        </div>
-        <button id="settingsBtn" class="p-2 rounded-full hover:bg-white/10 transition">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-        </button>
-    </header>
-
-    <div class="px-4 py-3 z-10">
-        <div class="glass rounded-xl p-3 flex flex-col gap-3">
-            <div class="flex gap-2">
-                <input type="text" id="videoUrl" placeholder="Paste YouTube URL here..." 
-                    class="glass-input flex-1 px-4 py-2 rounded-lg text-sm placeholder-gray-400">
-                <button id="loadBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition shadow-md whitespace-nowrap">
-                    Load
-                </button>
-            </div>
-            <div id="statusIndicator" class="hidden text-xs flex items-center gap-2 text-indigo-300">
-                <div class="loader w-3 h-3 border-2"></div>
-                <span id="statusText">Fetching transcript...</span>
-            </div>
-        </div>
-    </div>
-
-    <main id="chatContainer" class="flex-1 overflow-y-auto px-4 pb-4 space-y-4 no-scrollbar scroll-smooth">
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
         
-        <div class="flex flex-col items-center justify-center h-full text-center text-gray-400 opacity-60 mt-10" id="emptyState">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <p class="text-sm">Load a video to start hacking its content.</p>
-        </div>
+        body { font-family: 'Inter', sans-serif; background-color: #f0f4f9; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-        </main>
+        /* Markdown Styles */
+        .prose pre { background: #1e293b; padding: 1em; border-radius: 0.5em; overflow-x: auto; margin: 1em 0; }
+        .prose code { font-family: 'Courier New', Courier, monospace; font-size: 0.9em; }
+        .prose p { margin-bottom: 0.75em; line-height: 1.6; }
+        .prose ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 0.75em; }
+        .prose ol { list-style-type: decimal; padding-left: 1.5em; margin-bottom: 0.75em; }
+        .prose strong { font-weight: 600; color: #334155; }
 
-    <footer class="glass p-3 z-20 pb-safe">
-        <div class="flex gap-2 items-end">
-            <textarea id="userPrompt" rows="1" placeholder="Ask about the video..." 
-                class="glass-input flex-1 px-4 py-3 rounded-xl text-sm max-h-32 resize-none overflow-y-auto"
-                oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"></textarea>
-            <button id="sendBtn" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:opacity-90 text-white w-11 h-11 rounded-xl flex items-center justify-center shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transform rotate-90" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+        /* Animations */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .message-enter { animation: fadeIn 0.3s ease-out forwards; }
+        
+        .typing-dot {
+            animation: typing 1.4s infinite ease-in-out both;
+            background-color: #94a3b8;
+            border-radius: 50%;
+            display: inline-block;
+            height: 6px;
+            width: 6px;
+            margin: 0 2px;
+        }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+    </style>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            light: '#eef2ff',
+                            DEFAULT: '#4f46e5',
+                            dark: '#312e81',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="h-screen flex overflow-hidden text-slate-800">
+
+    <aside id="sidebar" class="bg-[#f0f4f9] w-72 flex-shrink-0 flex flex-col border-r border-slate-200 transition-transform transform -translate-x-full md:translate-x-0 absolute md:relative z-20 h-full">
+        <div class="p-4 flex items-center justify-between">
+            <button onclick="createNewChat()" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium py-2 px-4 rounded-xl flex items-center gap-2 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                </svg>
+                New Chat
+            </button>
+            <button onclick="toggleSidebar()" class="md:hidden p-2 text-slate-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
         </div>
-    </footer>
 
-    <div id="settingsModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="glass bg-[#1a1a2e] w-full max-w-md rounded-2xl p-6 shadow-2xl transform transition-all scale-100">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-bold text-white">Settings</h2>
-                <button id="closeSettings" class="text-gray-400 hover:text-white">
+        <div class="flex-1 overflow-y-auto px-2 space-y-1" id="chatHistoryList">
+            </div>
+
+        <div class="p-4 border-t border-slate-200">
+            <button onclick="openSettings()" class="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-lg transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Settings
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col bg-white h-full relative w-full">
+        
+        <header class="h-16 flex items-center justify-between px-4 border-b border-slate-100 z-10">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleSidebar()" class="md:hidden p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-full">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+                <div class="flex flex-col">
+                    <span class="font-semibold text-slate-700">Universal Chat</span>
+                    <span id="currentModelDisplay" class="text-xs text-slate-400">Loading model...</span>
+                </div>
+            </div>
+        </header>
+
+        <div id="chatContainer" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 scroll-smooth">
+            <div id="welcomeState" class="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-100 transition-opacity duration-300">
+                <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl shadow-lg mb-2"></div>
+                <h1 class="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
+                    Hello, Developer.
+                </h1>
+                <p class="text-slate-400 max-w-md">
+                    Ready to chat? Configure your API key in settings and start building the future.
+                </p>
+            </div>
+            </div>
+
+        <div class="p-4 bg-white">
+            <div class="max-w-3xl mx-auto relative bg-[#f0f4f9] rounded-3xl border border-transparent focus-within:border-slate-300 focus-within:bg-white focus-within:shadow-md transition-all duration-200">
+                <textarea 
+                    id="userOutput" 
+                    rows="1" 
+                    placeholder="Ask anything..." 
+                    class="w-full bg-transparent text-slate-700 px-5 py-4 pr-12 rounded-3xl focus:outline-none resize-none max-h-48 overflow-y-auto scrollbar-hide"
+                    oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"
+                    onkeydown="handleEnter(event)"
+                ></textarea>
+                <button onclick="sendMessage()" id="sendBtn" class="absolute right-2 bottom-2 p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
                     </svg>
                 </button>
             </div>
+            <p class="text-center text-xs text-slate-400 mt-2">AI can make mistakes. Check important info.</p>
+        </div>
+    </main>
+
+    <div id="settingsModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 transform transition-all scale-100">
+            <h2 class="text-xl font-bold text-slate-800 mb-4">Settings</h2>
             
             <div class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">OpenRouter API Key</label>
-                    <input type="password" id="apiKeyInput" placeholder="sk-or-..." 
-                        class="glass-input w-full px-4 py-3 rounded-lg text-sm">
+                    <label class="block text-sm font-medium text-slate-600 mb-1">OpenRouter API Key</label>
+                    <input type="password" id="apiKeyInput" placeholder="sk-or-..." class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    <p class="text-xs text-slate-400 mt-1">Stored locally in your browser.</p>
                 </div>
                 
                 <div>
-                    <label class="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">Model Name (Manual)</label>
-                    <input type="text" id="modelNameInput" placeholder="e.g. google/gemini-2.0-flash-001" 
-                        class="glass-input w-full px-4 py-3 rounded-lg text-sm">
-                    <p class="text-xs text-gray-500 mt-1">Common: <code class="text-indigo-400">google/gemini-2.0-flash-lite-preview-02-05:free</code>, <code class="text-indigo-400">deepseek/deepseek-r1:free</code></p>
+                    <label class="block text-sm font-medium text-slate-600 mb-1">Model Name</label>
+                    <input type="text" id="modelInput" placeholder="e.g. google/gemini-2.0-flash-001" class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    <div class="flex gap-2 mt-2 flex-wrap">
+                        <button onclick="fillModel('google/gemini-2.0-flash-001')" class="text-xs bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded">Gemini 2.0</button>
+                        <button onclick="fillModel('deepseek/deepseek-r1')" class="text-xs bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded">DeepSeek R1</button>
+                        <button onclick="fillModel('openai/gpt-4o')" class="text-xs bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded">GPT-4o</button>
+                    </div>
                 </div>
             </div>
 
-            <button id="saveSettings" class="w-full mt-6 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-lg transition shadow-lg">
-                Save & Close
-            </button>
+            <div class="mt-6 flex justify-end gap-3">
+                <button onclick="closeSettings()" class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
+                <button onclick="saveSettings()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">Save</button>
+            </div>
         </div>
     </div>
 
     <script>
-        // --- State ---
-        let videoContext = "";
-        const elements = {
-            videoUrl: document.getElementById('videoUrl'),
-            loadBtn: document.getElementById('loadBtn'),
-            statusIndicator: document.getElementById('statusIndicator'),
-            statusText: document.getElementById('statusText'),
-            chatContainer: document.getElementById('chatContainer'),
-            userPrompt: document.getElementById('userPrompt'),
-            sendBtn: document.getElementById('sendBtn'),
-            settingsBtn: document.getElementById('settingsBtn'),
-            settingsModal: document.getElementById('settingsModal'),
-            closeSettings: document.getElementById('closeSettings'),
-            saveSettings: document.getElementById('saveSettings'),
-            apiKeyInput: document.getElementById('apiKeyInput'),
-            modelNameInput: document.getElementById('modelNameInput'),
-            emptyState: document.getElementById('emptyState')
+        // --- CONFIG & STATE ---
+        const STATE = {
+            chats: [], // Array of { id, title, messages: [] }
+            activeChatId: null,
+            apiKey: '',
+            model: 'google/gemini-2.0-flash-001'
         };
 
-        // --- Initialization ---
-        document.addEventListener('DOMContentLoaded', () => {
-            const savedKey = localStorage.getItem('or_api_key');
-            const savedModel = localStorage.getItem('or_model_name');
+        const DOM = {
+            chatContainer: document.getElementById('chatContainer'),
+            userInput: document.getElementById('userOutput'),
+            sidebar: document.getElementById('sidebar'),
+            chatHistoryList: document.getElementById('chatHistoryList'),
+            settingsModal: document.getElementById('settingsModal'),
+            welcomeState: document.getElementById('welcomeState'),
+            currentModelDisplay: document.getElementById('currentModelDisplay'),
+            sendBtn: document.getElementById('sendBtn')
+        };
+
+        // --- INITIALIZATION ---
+        window.addEventListener('DOMContentLoaded', () => {
+            loadFromLocalStorage();
+            renderSidebar();
             
-            if (savedKey) elements.apiKeyInput.value = savedKey;
-            if (savedModel) elements.modelNameInput.value = savedModel;
+            // If no chats, create one
+            if (STATE.chats.length === 0) {
+                createNewChat(false);
+            } else {
+                // Load most recent
+                loadChat(STATE.chats[0].id);
+            }
 
-            if (!savedKey) {
-                // Open modal automatically if no key is found
-                toggleModal(true);
+            // Check settings
+            if (!STATE.apiKey) {
+                setTimeout(openSettings, 500); // Prompt user if key missing
             }
         });
 
-        // --- Event Listeners ---
-        elements.settingsBtn.addEventListener('click', () => toggleModal(true));
-        elements.closeSettings.addEventListener('click', () => toggleModal(false));
-        
-        elements.saveSettings.addEventListener('click', () => {
-            const key = elements.apiKeyInput.value.trim();
-            const model = elements.modelNameInput.value.trim();
+        // --- LOCAL STORAGE ---
+        function saveToLocalStorage() {
+            localStorage.setItem('uai_chats', JSON.stringify(STATE.chats));
+            localStorage.setItem('uai_settings', JSON.stringify({
+                apiKey: STATE.apiKey,
+                model: STATE.model
+            }));
+        }
+
+        function loadFromLocalStorage() {
+            const savedChats = localStorage.getItem('uai_chats');
+            const savedSettings = localStorage.getItem('uai_settings');
+
+            if (savedChats) STATE.chats = JSON.parse(savedChats);
             
-            if(key && model) {
-                localStorage.setItem('or_api_key', key);
-                localStorage.setItem('or_model_name', model);
-                toggleModal(false);
-                addSystemMessage("Settings saved successfully.");
-            } else {
-                alert("Please fill in both fields.");
+            if (savedSettings) {
+                const settings = JSON.parse(savedSettings);
+                STATE.apiKey = settings.apiKey || '';
+                STATE.model = settings.model || 'google/gemini-2.0-flash-001';
             }
-        });
+            
+            // Update UI
+            document.getElementById('apiKeyInput').value = STATE.apiKey;
+            document.getElementById('modelInput').value = STATE.model;
+            DOM.currentModelDisplay.textContent = STATE.model;
+        }
 
-        elements.loadBtn.addEventListener('click', fetchTranscript);
-        elements.sendBtn.addEventListener('click', handleChatSubmit);
+        // --- CHAT LOGIC ---
+        function createNewChat(shouldRender = true) {
+            const newChat = {
+                id: Date.now().toString(),
+                title: 'New Conversation',
+                messages: []
+            };
+            STATE.chats.unshift(newChat); // Add to top
+            saveToLocalStorage();
+            renderSidebar();
+            if (shouldRender) loadChat(newChat.id);
+            if (window.innerWidth < 768) toggleSidebar(); // Close sidebar on mobile
+        }
 
-        // Allow Enter key to send in textarea (Shift+Enter for new line)
-        elements.userPrompt.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleChatSubmit();
-            }
-        });
+        function loadChat(chatId) {
+            STATE.activeChatId = chatId;
+            
+            // Update UI Active State in Sidebar
+            document.querySelectorAll('.chat-item').forEach(el => {
+                el.classList.remove('bg-slate-200', 'font-semibold');
+                if (el.dataset.id === chatId) el.classList.add('bg-slate-200', 'font-semibold');
+            });
 
-        // --- Helper Functions ---
-
-        function toggleModal(show) {
-            if(show) {
-                elements.settingsModal.classList.remove('hidden');
+            const chat = STATE.chats.find(c => c.id === chatId);
+            
+            // Clear container
+            DOM.chatContainer.innerHTML = '';
+            
+            if (!chat || chat.messages.length === 0) {
+                DOM.chatContainer.appendChild(DOM.welcomeState);
+                DOM.welcomeState.classList.remove('hidden');
             } else {
-                elements.settingsModal.classList.add('hidden');
+                DOM.welcomeState.classList.add('hidden');
+                chat.messages.forEach(msg => appendMessageToUI(msg.role, msg.content, false));
+                scrollToBottom();
             }
         }
 
-        function setStatus(loading, text = "") {
-            if (loading) {
-                elements.statusIndicator.classList.remove('hidden');
-                elements.statusText.innerText = text;
-                elements.loadBtn.disabled = true;
-                elements.loadBtn.classList.add('opacity-50');
-            } else {
-                elements.statusIndicator.classList.add('hidden');
-                elements.loadBtn.disabled = false;
-                elements.loadBtn.classList.remove('opacity-50');
-            }
-        }
-
-        // --- Core Logic: The Jina Hack ---
-        async function fetchTranscript() {
-            const url = elements.videoUrl.value.trim();
-            if (!url) return alert("Please enter a YouTube URL.");
-
-            setStatus(true, "Fetching transcript via Jina...");
+        function deleteChat(e, chatId) {
+            e.stopPropagation();
+            if (!confirm("Delete this chat?")) return;
             
-            // Jina Reader format
-            const jinaUrl = `https://r.jina.ai/${url}`;
+            STATE.chats = STATE.chats.filter(c => c.id !== chatId);
+            saveToLocalStorage();
+            renderSidebar();
 
-            try {
-                // Jina Reader API returns plain text/markdown of the content
-                const response = await fetch(jinaUrl);
-                
-                if (!response.ok) throw new Error("Failed to fetch transcript.");
-                
-                const text = await response.text();
-                
-                // Simple validation to check if it's an error page or actual content
-                if (text.length < 100 || text.includes("404 Not Found")) {
-                    throw new Error("Transcript not found or video unavailable.");
+            if (STATE.activeChatId === chatId) {
+                if (STATE.chats.length > 0) loadChat(STATE.chats[0].id);
+                else {
+                    createNewChat();
                 }
-
-                videoContext = text;
-                setStatus(false);
-                
-                // UI Feedback
-                elements.emptyState.classList.add('hidden');
-                addSystemMessage("✅ Video content loaded! I have read the transcript. Ask me anything.");
-                
-            } catch (error) {
-                console.error(error);
-                setStatus(false);
-                alert("Error fetching transcript: " + error.message + "\n\nNote: Ensure the video has closed captions/transcript available.");
             }
         }
 
-        // --- Core Logic: Chat & LLM ---
-        async function handleChatSubmit() {
-            const question = elements.userPrompt.value.trim();
-            if (!question) return;
-
-            const apiKey = localStorage.getItem('or_api_key');
-            const modelName = localStorage.getItem('or_model_name');
-
-            // Validation
-            if (!apiKey || !modelName) {
-                toggleModal(true);
-                return alert("Please configure your API Key and Model first.");
-            }
-            if (!videoContext) {
-                return alert("Please load a video URL first.");
+        async function sendMessage() {
+            const text = DOM.userInput.value.trim();
+            if (!text) return;
+            if (!STATE.apiKey) {
+                alert("Please set your OpenRouter API Key in Settings.");
+                openSettings();
+                return;
             }
 
-            // 1. Add User Message to Chat
-            addMessageToUI('user', question);
-            elements.userPrompt.value = '';
-            elements.userPrompt.style.height = 'auto'; // Reset height
-
-            // 2. Loading State in Chat
-            const loadingId = addLoadingBubble();
+            // 1. UI Updates
+            DOM.userInput.value = '';
+            DOM.userInput.style.height = 'auto';
+            DOM.welcomeState.classList.add('hidden');
             
-            // 3. Call OpenRouter
+            // 2. Add User Message
+            const userMsg = { role: 'user', content: text };
+            addMessageToState(userMsg);
+            appendMessageToUI('user', text);
+
+            // 3. Create Placeholder for AI
+            const aiMsgId = 'ai-' + Date.now();
+            appendMessageToUI('assistant', '', true, aiMsgId); // Empty bubble with loader
+            
+            // 4. API Call
             try {
                 const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
                     method: "POST",
                     headers: {
-                        "Authorization": `Bearer ${apiKey}`,
-                        "Content-Type": "application/json"
+                        "Authorization": `Bearer ${STATE.apiKey}`,
+                        "Content-Type": "application/json",
+                        "HTTP-Referer": window.location.href, // OpenRouter requirement
+                        "X-Title": "Universal Chat"
                     },
                     body: JSON.stringify({
-                        "model": modelName,
-                        "messages": [
-                            {
-                                "role": "system",
-                                "content": `You are a helpful AI assistant. You have been provided with the transcript of a YouTube video below. Use this context to answer the user's questions accurately. If the answer isn't in the transcript, say so.\n\n--- VIDEO TRANSCRIPT ---\n${videoContext.substring(0, 50000)}` // Limit context size conservatively
-                            },
-                            {
-                                "role": "user",
-                                "content": question
-                            }
-                        ]
+                        "model": STATE.model,
+                        "messages": getCurrentChatHistory()
                     })
                 });
 
                 if (!response.ok) {
                     const err = await response.json();
-                    throw new Error(err.error?.message || "API Error");
+                    throw new Error(err.error?.message || "API Request Failed");
                 }
 
                 const data = await response.json();
                 const aiText = data.choices[0].message.content;
 
-                // 4. Update UI with AI Response
-                removeLoadingBubble(loadingId);
-                addMessageToUI('ai', aiText);
+                // 5. Update AI Bubble
+                updateAiMessageUI(aiMsgId, aiText);
+                addMessageToState({ role: 'assistant', content: aiText });
+                
+                // 6. Update Chat Title if it's the first message
+                const currentChat = STATE.chats.find(c => c.id === STATE.activeChatId);
+                if (currentChat.messages.length <= 2) {
+                    // Simple heuristic: use first 30 chars of user prompt
+                    currentChat.title = text.substring(0, 30) + (text.length > 30 ? '...' : '');
+                    saveToLocalStorage();
+                    renderSidebar();
+                }
 
             } catch (error) {
-                removeLoadingBubble(loadingId);
-                addMessageToUI('system', `Error: ${error.message}`);
+                updateAiMessageUI(aiMsgId, `**Error:** ${error.message}`);
             }
         }
 
-        // --- UI Rendering ---
+        // --- HELPER FUNCTIONS ---
 
-        function addMessageToUI(role, text) {
-            elements.emptyState.classList.add('hidden');
-            
+        function getCurrentChatHistory() {
+            const chat = STATE.chats.find(c => c.id === STATE.activeChatId);
+            return chat ? chat.messages.map(m => ({ role: m.role, content: m.content })) : [];
+        }
+
+        function addMessageToState(msg) {
+            const chat = STATE.chats.find(c => c.id === STATE.activeChatId);
+            if (chat) {
+                chat.messages.push(msg);
+                saveToLocalStorage();
+            }
+        }
+
+        function appendMessageToUI(role, text, isLoading = false, elementId = null) {
             const div = document.createElement('div');
+            div.className = `w-full flex ${role === 'user' ? 'justify-end' : 'justify-start'} message-enter mb-6`;
+            if (elementId) div.id = elementId;
+
             const isUser = role === 'user';
-            const isSystem = role === 'system';
-
-            div.className = `flex w-full ${isSystem ? 'justify-center' : (isUser ? 'justify-end' : 'justify-start')} animate-fade-in`;
             
-            let innerHTML = '';
-
-            if (isSystem) {
-                innerHTML = `<div class="bg-white/10 text-gray-300 text-xs px-3 py-1 rounded-full">${text}</div>`;
+            let contentHtml = '';
+            if (isLoading) {
+                contentHtml = `<div class="flex space-x-1 h-6 items-center"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
             } else {
-                // Parse Markdown for AI, Plain text for User (safe)
-                const content = isUser ? escapeHtml(text) : marked.parse(text);
-                
-                innerHTML = `
-                    <div class="max-w-[85%] ${isUser ? 'bg-indigo-600 rounded-br-none' : 'glass rounded-bl-none'} p-3 rounded-2xl shadow-sm text-sm leading-relaxed prose prose-invert">
-                        ${content}
-                    </div>
-                `;
+                contentHtml = isUser ? text : marked.parse(text);
             }
 
-            div.innerHTML = innerHTML;
-            elements.chatContainer.appendChild(div);
-            scrollToBottom();
-        }
+            const bubbleClass = isUser 
+                ? 'bg-[#eef2ff] text-slate-800 rounded-2xl rounded-tr-sm max-w-[85%] md:max-w-[70%] px-5 py-3 shadow-sm' 
+                : 'text-slate-800 w-full max-w-3xl px-0 py-0 prose prose-slate leading-relaxed';
+            
+            // Avatar for AI
+            const avatar = !isUser ? `
+                <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-teal-400 flex-shrink-0 flex items-center justify-center text-white text-xs font-bold mr-4 mt-1 shadow-sm">
+                    AI
+                </div>` : '';
 
-        function addLoadingBubble() {
-            const id = 'loader-' + Date.now();
-            const div = document.createElement('div');
-            div.id = id;
-            div.className = "flex w-full justify-start animate-pulse";
             div.innerHTML = `
-                <div class="glass p-3 rounded-2xl rounded-bl-none flex gap-1 items-center">
-                    <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0ms"></div>
-                    <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 150ms"></div>
-                    <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 300ms"></div>
+                ${avatar}
+                <div class="${bubbleClass} overflow-hidden">
+                    ${contentHtml}
                 </div>
             `;
-            elements.chatContainer.appendChild(div);
+
+            DOM.chatContainer.appendChild(div);
+            
+            // Highlight Code blocks
+            if (!isUser && !isLoading) {
+                div.querySelectorAll('pre code').forEach((block) => {
+                    hljs.highlightElement(block);
+                });
+            }
+
             scrollToBottom();
-            return id;
         }
 
-        function removeLoadingBubble(id) {
-            const el = document.getElementById(id);
-            if (el) el.remove();
+        function updateAiMessageUI(elementId, text) {
+            const container = document.getElementById(elementId);
+            if (!container) return;
+            
+            // Remove the container content and rebuild slightly to remove loading state
+            const contentDiv = container.querySelector('.prose') || container.querySelector('div:last-child'); // Fallback selector
+            
+            // Replace loading dots with markdown content
+            contentDiv.innerHTML = marked.parse(text);
+            
+            // Apply highlighting
+            contentDiv.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightElement(block);
+            });
+            
+            scrollToBottom();
         }
 
-        function addSystemMessage(text) {
-            addMessageToUI('system', text);
+        // --- UI UTILS ---
+        
+        function renderSidebar() {
+            DOM.chatHistoryList.innerHTML = '';
+            STATE.chats.forEach(chat => {
+                const isActive = chat.id === STATE.activeChatId;
+                const div = document.createElement('div');
+                div.className = `chat-item group flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer hover:bg-slate-200 transition-colors ${isActive ? 'bg-slate-200 font-semibold' : 'text-slate-600'}`;
+                div.dataset.id = chat.id;
+                div.onclick = () => loadChat(chat.id);
+                
+                div.innerHTML = `
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 flex-shrink-0 opacity-50" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd" />
+                        </svg>
+                        <span class="truncate text-sm">${chat.title}</span>
+                    </div>
+                    <button onclick="deleteChat(event, '${chat.id}')" class="opacity-0 group-hover:opacity-100 hover:text-red-500 transition-opacity p-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 000-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                `;
+                DOM.chatHistoryList.appendChild(div);
+            });
+        }
+
+        function toggleSidebar() {
+            DOM.sidebar.classList.toggle('-translate-x-full');
+            // Overlay logic for mobile could go here, but simple toggle is sufficient
         }
 
         function scrollToBottom() {
-            elements.chatContainer.scrollTop = elements.chatContainer.scrollHeight;
+            DOM.chatContainer.scrollTo({ top: DOM.chatContainer.scrollHeight, behavior: 'smooth' });
         }
 
-        function escapeHtml(text) {
-            const map = {
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                '"': '&quot;',
-                "'": '&#039;'
-            };
-            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+        function handleEnter(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
         }
 
-        // Simple Tailwind Animation Plugin Shim (for animate-fade-in)
-        const style = document.createElement('style');
-        style.innerHTML = `
-            @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-            .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
-        `;
-        document.head.appendChild(style);
+        // --- SETTINGS MODAL LOGIC ---
+        function openSettings() {
+            DOM.settingsModal.classList.remove('hidden');
+        }
+
+        function closeSettings() {
+            DOM.settingsModal.classList.add('hidden');
+        }
+
+        function saveSettings() {
+            const key = document.getElementById('apiKeyInput').value.trim();
+            const model = document.getElementById('modelInput').value.trim();
+            
+            if (!key) return alert("API Key cannot be empty");
+            if (!model) return alert("Model name cannot be empty");
+
+            STATE.apiKey = key;
+            STATE.model = model;
+            DOM.currentModelDisplay.textContent = model;
+            
+            saveToLocalStorage();
+            closeSettings();
+        }
+
+        function fillModel(val) {
+            document.getElementById('modelInput').value = val;
+        }
+
+        // Initialize markdown rendering options safely
+        marked.setOptions({
+            breaks: true,
+            gfm: true
+        });
 
     </script>
 </body>
